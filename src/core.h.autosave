@@ -18,7 +18,7 @@ public:
     uint16_t opcode;
     uint8_t  memory[4096];
 
-    uint8_t  screen[64*32];
+    uint8_t  screen[64][32];
 
     uint8_t  V[16];
     uint16_t indexRegister;

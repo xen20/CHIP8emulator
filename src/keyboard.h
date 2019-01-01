@@ -1,8 +1,6 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-//contemplate alternative solution using C++ <map> functionality or something similar.
-
 #include <cstdint>
 
 #define HEX_1 '1'

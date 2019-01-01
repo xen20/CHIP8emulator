@@ -16,6 +16,7 @@ public:
     void c8_initSDL(void);
     void c8_drawSDL(void);
     void c8_closeSDL(void);
+    void c8_clearScreenSDL(void);
 private:
     SDL_Event    event;
     SDL_Window   *win;
