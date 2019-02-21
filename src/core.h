@@ -18,7 +18,7 @@ public:
     uint16_t opcode;
     uint8_t  memory[4096];
 
-    uint8_t  screen[64*32];
+    uint8_t  screen[64][32];
 
     uint8_t  V[16];
     uint16_t indexRegister;
@@ -28,6 +28,8 @@ public:
 
     uint16_t stack[16];
     uint16_t stackPtr;
+
+    uint8_t drawFlag;
 private:
     void loadFontset(void);
 };
@@ -38,11 +40,10 @@ public:
     ~Core();
     void loadROM(char *ROM);
     void initSDL(void);
+    void drawSDL(void);
     void closeSDL(void);
     void emulateSystem(void);
-    void pollKeyboard(void);
     bool isRunning;
-    uint8_t drawFlag;
 private:
     void fetchOpcode(void);
     uint16_t decodeOpcode(void);

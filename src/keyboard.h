@@ -2,6 +2,7 @@
 #define KEYBOARD_H
 
 #include <cstdint>
+#include <SDL2/SDL.h>
 
 #define HEX_1 '1'
 #define HEX_2 '2'
@@ -23,16 +24,20 @@
 #define HEX_B 'c'
 #define HEX_F 'v'
 
-extern uint8_t c8_keystates[16];
+extern uint8_t keystates[16];
 
-class keyboard
+class Keyboard
 {
 public:
-    keyboard();
-    void    c8_keyboard(char key, bool state);
+    Keyboard(SDL_Event _event, SDL_Window *_win, SDL_Renderer *_ren);
+    ~Keyboard();
+    void pollKeyboard(bool *isRunning);
 private:
-    void    c8_keypressed(char key);
-    void    c8_keyreleased(char key);
+    SDL_Event    event;
+    SDL_Window   *win;
+    SDL_Renderer *ren;
+    void    Keypressed(char key);
+    void    Keyreleased(char key);
 };
 
 #endif // KEYBOARD_H

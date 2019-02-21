@@ -3,6 +3,9 @@
 
 #include "draw.h"
 
+#define   SCREEN_HEIGHT 32
+#define   SCREEN_WIDTH  64
+
 Draw::Draw(SDL_Event _event, SDL_Window *_win, SDL_Renderer *_ren)
 {
     event = _event;
@@ -10,9 +13,9 @@ Draw::Draw(SDL_Event _event, SDL_Window *_win, SDL_Renderer *_ren)
     ren = _ren;
 }
 
-void Draw::c8_initSDL(void){
+void Draw::initSDL(void){
     if(SDL_Init(SDL_INIT_VIDEO) < 0){
-        printf("SDL video init error %s\n", SDL_GetError());
+        fprintf(stderr, "SDL video init error %s\n", SDL_GetError());
         SDL_Quit();
     }
     else{
@@ -21,7 +24,7 @@ void Draw::c8_initSDL(void){
         ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
         if(win == NULL || ren == NULL){
             SDL_DestroyWindow(win);
-            printf("SDL_CreateWindow or SDL_CreateRenderer error %s\n", SDL_GetError());
+            fprintf(stderr, "SDL_CreateWindow or SDL_CreateRenderer error %s\n", SDL_GetError());
             SDL_Quit();
         }
         else{
@@ -30,21 +33,33 @@ void Draw::c8_initSDL(void){
     }
 }
 
-void Draw::c8_drawSDL(void){
+void Draw::drawSDL(Hardware *HW){
     SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
-    for (int idx = 0; idx < WINDOW_WIDTH; ++idx){
-        SDL_RenderDrawPoint(ren, idx, idx);
+    /*this method is for the prototype stage only,
+      considering that drawing a single point every cycle
+      is hardly effective, and potentially very slow.
+      consider replacing with SDLRenderCopy, SDL Texture or some such*/
+
+    uint8_t current_pixel = 0;
+    for(int idxY = 0; idxY < SCREEN_HEIGHT; ++idxY){
+        for(int idxX = 0; idxX < SCREEN_WIDTH; ++idxX){
+            current_pixel = HW->screen[idxX][idxY];
+            if(current_pixel == 1) SDL_RenderDrawPoint(ren, idxX, idxY);
+        }
     }
+//    for (int idx = 0; idx < WINDOW_WIDTH; ++idx){
+//        SDL_RenderDrawPoint(ren, idx, idx);
+//    }
     SDL_RenderPresent(ren);
 }
 
-void Draw::c8_clearScreenSDL(void){
+void Draw::clearScreenSDL(void){
     SDL_SetRenderDrawColor(ren, 0, 0, 0, 0);
     SDL_RenderClear(ren);
     SDL_RenderPresent(ren);
 }
 
-void Draw::c8_closeSDL(void){
+void Draw::closeSDL(void){
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     SDL_Quit();

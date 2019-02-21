@@ -1,8 +1,8 @@
-#include <cstring>  //memset, size_t
+#include <cstring>        //memset(), size_t
+#include <cstdlib>        //exit()
 #include <unordered_map>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_keyboard.h>
 
 #include "core.h"
 #include "random.h"
@@ -10,17 +10,16 @@
 #include "keyboard.h"
 #include "fontset.h"
 
-uint8_t c8_keystates[16];
+uint8_t      keystates[16];
 
-Hardware  HW;
+Hardware     HW;
 
 SDL_Event    event;
 SDL_Window   *win = NULL;
 SDL_Renderer *ren = NULL;
 
-keyboard     pollkey;
-
-Draw Draw(event, win, ren);
+Draw         Draw(event, win, ren);
+Keyboard     Keyboard(event, win, ren);
 
 typedef void    (Interpreter::*interpreterFptr)(void);
 typedef          std::unordered_map<uint16_t, interpreterFptr> FunctionMap;
@@ -44,6 +43,7 @@ Hardware::Hardware(){
     memset(screen, 0, sizeof(screen));
 
     loadFontset();
+    drawFlag  = 1;
 }
 
 Hardware::~Hardware(){
@@ -59,9 +59,7 @@ void Hardware::loadFontset(void){
 }
 
 Core::Core(){
-
     isRunning = true;
-    drawFlag  = 1;
 }
 
 Core::~Core(){
@@ -74,7 +72,10 @@ void Core::loadROM(char *ROM){
 
     ROMStream = fopen(ROM, "rb");
 
-    if(ROMStream == NULL) perror("Invalid ROM path given"); //maybe instead of perror solution, fprintf to stderr solution
+    if(ROMStream == NULL){
+        perror("Failed to load rom: ");
+        exit(-1);
+    }
     else{
         while(ROMChunk != EOF){
             ROMChunk = fgetc(ROMStream);
@@ -87,38 +88,20 @@ void Core::loadROM(char *ROM){
 }
 
 void Core::initSDL(void){
-    Draw.c8_initSDL();
-    Draw.c8_drawSDL();
+    Draw.initSDL();
 }
 
 void Core::closeSDL(void){
-    Draw.c8_closeSDL();
+    Draw.closeSDL();
 }
 
 void Core::emulateSystem(void){
+    Keyboard.pollKeyboard(&isRunning);
+    fetchOpcode();
 
-}
-
-void Core::pollKeyboard(void){
-    char *fullKeyName = NULL;
-    char  pressedKey  = 0;
-
-    if(SDL_PollEvent(&event)){
-        switch (event.type) {
-            case SDL_QUIT:
-                isRunning = false;
-                break;
-            case SDL_KEYDOWN:
-                fullKeyName = (char*)SDL_GetKeyName(event.key.keysym.sym);
-                pressedKey  = fullKeyName[0];
-                pollkey.c8_keyboard(pressedKey, true);
-                break;
-            case SDL_KEYUP:
-                fullKeyName = (char*)SDL_GetKeyName(event.key.keysym.sym);
-                pressedKey  = fullKeyName[0];
-                pollkey.c8_keyboard(pressedKey, false);
-                break;
-        }
+    if(HW.drawFlag == 1){
+        Draw.drawSDL(&HW);
+        HW.drawFlag = 0;
     }
 }
 
@@ -130,6 +113,7 @@ void Core::fetchOpcode(void){
 
     HW.opcode = HW.memory[HW.programCounter] << 8 | HW.memory[HW.programCounter+1];
     HW.programCounter += 2;
+    //it is likely that all this business about pc+=4 (e.g 4xKK) is unnecessary, since pc+=2 on fetch
 }
 
 uint16_t Core::decodeOpcode(void){
@@ -191,7 +175,9 @@ void Core::interpretOpcode(void){
     auto iter = interpreterFunctions.find(HW.opcode);
 
     if(iter == interpreterFunctions.end()){
-        perror("Invalid opcode detected");
+        fprintf(stderr, "Invalid opcode detected");
+        //while debug, no exit() upon opcode error: release version should
+        //exit on error
     }
     else{
         (Interpret.*(iter->second))();
@@ -207,7 +193,8 @@ Interpreter::~Interpreter(){
 }
 
 void Interpreter::_00E0(void){
-    Draw.c8_clearScreenSDL();
+    memset(HW.screen, 0, sizeof(HW.screen)); //clear the screen of pixels
+    Draw.clearScreenSDL();                //clear existing image w/SDL
 }
 
 void Interpreter::_00EE(void){
@@ -231,6 +218,9 @@ void Interpreter::_2NNN(void){
 void Interpreter::_3XKK(void){
 
     if(HW.V[X] == KK){
+        //if program buggy, possibly change 3xkk,4xkk,5xy0 to pc +=4
+        //reasoning: skip next instruction while executing given instruction,
+        //hence two instructions = pc incremented twice
         HW.programCounter += 2;
     }
 }
@@ -280,45 +270,37 @@ void Interpreter::_8XY3(void){
 }
 
 void Interpreter::_8XY4(void){
-    //implemented as idea on website, but may need a rewrite (see "base" chip8 program)
+    //implemented as idea on website, but may need a rewrite.
     uint16_t  temp = 0;
 
     temp = HW.V[X] + HW.V[Y];
 
-    if(temp > 0xFF){
-        HW.V[0xF] = 1;
-    }
-    else HW.V[0xF] = 0;
+    if(temp > 0xFF) HW.V[0xF] = 1;
+    else            HW.V[0xF] = 0;
 
     HW.V[X] = temp >> 8;
 }
 
 void Interpreter::_8XY5(void){
 
-    if(HW.V[X] > HW.V[Y]){
-        HW.V[0xF] = 1;
-    }
-    else HW.V[0xF] = 0;
+    if(HW.V[X] > HW.V[Y]) HW.V[0xF] = 1;
+    else                  HW.V[0xF] = 0;
 
     HW.V[X] -= HW.V[Y];
 }
 
 void Interpreter::_8XY6(void){
 
-    if((HW.V[X] & 0x1) == 1){
-        HW.V[0xF] = 1;
-    }
-    else HW.V[0xF] = 0;
+    if((HW.V[X] & 0x1) == 1) HW.V[0xF] = 1;
+    else                     HW.V[0xF] = 0;
 
     HW.V[X] >>= 1; //another way to divide by 2
 }
 
 void Interpreter::_8XY7(void){
 
-    if(HW.V[Y] > HW.V[X]){
-        HW.V[0xF] = 1;
-    }
-    else HW.V[0xF] = 0;
+    if(HW.V[Y] > HW.V[X]) HW.V[0xF] = 1;
+    else                  HW.V[0xF] = 0;
 
     HW.V[X] = HW.V[Y] - HW.V[X];
 }
@@ -327,16 +309,14 @@ void Interpreter::_8XYE(void){
 
     //maybe take a look at this again and see if desired value is acquired!
 
-    if(((HW.V[X] >> 3) & 0x1) == 1 ){
-        HW.V[0xF] = 1;
-    }
-    else HW.V[0xF] = 0;
+    if((HW.V[X] >> 7) == 1 ) HW.V[0xF] = 1;
+    else                     HW.V[0xF] = 0;
 
     HW.V[X] <<= 1;  //another way to mul by 2
 }
 
 void Interpreter::_9XY0(void){
-
+    //same deal as 4xKK
     if(HW.V[X] != HW.V[Y]) HW.programCounter += 2;
 }
 
@@ -359,39 +339,45 @@ void Interpreter::_CXKK(void){
 void Interpreter::_DXYN(void){
     //maximum sprite size is 8x15, where it is the height that is adjustable
     HW.V[0xF] = 0;
-    uint8_t current_byte = 0;
+    uint8_t current_pixel = 0;
 
     for(int idxY = 0; idxY < N; ++idxY){
-        current_byte = HW.memory[HW.indexRegister+idxY];
+        current_pixel = HW.memory[HW.indexRegister+idxY];
         for(int idxX = 0; idxX < 8; ++idxX){
-            if((current_byte >> idxX ^ HW.screen[HW.V[X]+idxX][HW.V[Y]+idxY]) == 1){
-                HW.V[0xF] = 1;
+            if((current_pixel & (0x80 >> idxX)) != 0){
+                //check if pixel already exists at location
+                if(HW.screen[HW.V[X]+idxX][HW.V[Y]+idxY] == 1){
+                    HW.V[0xF] = 1;
+                }
+                HW.screen[HW.V[X]+idxX][HW.V[Y]+idxY] ^= 1;
             }
         }
     };
+
+    HW.programCounter += 2; //consider removing pc+=2 since cowgood does not state it is needed
+    HW.drawFlag = 1;
 }
 
 void Interpreter::_EX9E(void){
-    if(c8_keystates[HW.V[X]] == 1){
-        HW.programCounter += 2;
-    }
+    if(keystates[HW.V[X]] == 1) HW.programCounter += 2;
 }
 
 void Interpreter::_EXA1(void){
-    if(c8_keystates[HW.V[X]] == 0){
-        HW.programCounter += 2;
-    }
+    if(keystates[HW.V[X]] == 0) HW.programCounter += 2;
 }
 
 void Interpreter::_FX07(void){
-
     HW.V[X] = HW.delayTimer;
 }
 
 void Interpreter::_FX0A(void){
+    //if buggy, take a look at this again and see if a delay/exec stop can
+    //be written using some SDL function instead of rolling PC back while
+    //no key has been pressed
+
     int temp = -1;
     for (int idx=0; idx<16; ++idx) {
-        if (c8_keystates[idx]) {
+        if (keystates[idx]) {
             temp = idx;
             break;
         }
@@ -418,7 +404,7 @@ void Interpreter::_FX1E(void){
 }
 
 void Interpreter::_FX29(void){
-
+    HW.indexRegister = HW.V[X] * 0x5;
 }
 
 void Interpreter::_FX33(void){
