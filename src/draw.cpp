@@ -3,8 +3,8 @@
 
 #include "draw.h"
 
-#define   SCREEN_HEIGHT 32
-#define   SCREEN_WIDTH  64
+#define   SCREEN_HEIGHT 640//32
+#define   SCREEN_WIDTH  480//64
 
 Draw::Draw(SDL_Event _event, SDL_Window *_win, SDL_Renderer *_ren)
 {

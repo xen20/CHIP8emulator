@@ -59,6 +59,7 @@ void Hardware::loadFontset(void){
 }
 
 Core::Core(){
+    indexOpcodes();
     isRunning = true;
 }
 
@@ -98,6 +99,7 @@ void Core::closeSDL(void){
 void Core::emulateSystem(void){
     Keyboard.pollKeyboard(&isRunning);
     fetchOpcode();
+    interpretOpcode();
 
     if(HW.drawFlag == 1){
         Draw.drawSDL(&HW);
@@ -171,15 +173,24 @@ void Core::indexOpcodes(void){
 
 void Core::interpretOpcode(void){
     Interpreter Interpret;
+    static int iterations = 0; //debug
+    int opcode = HW.programCounter;
 
-    auto iter = interpreterFunctions.find(HW.opcode);
+    uint16_t rawOpcode = decodeOpcode(); // rawOpcode - opcode stripped of x, y, k values etc.
+                                         // simplified for the purpose of accessing function from table
+
+    auto iter = interpreterFunctions.find(rawOpcode);
+    printf("%x\n", rawOpcode);
 
     if(iter == interpreterFunctions.end()){
-        fprintf(stderr, "Invalid opcode detected");
+        fprintf(stderr, "Invalid opcode detected\n");
+        fprintf(stderr, "%i", iterations);
+        exit(-2);
         //while debug, no exit() upon opcode error: release version should
         //exit on error
     }
     else{
+        ++iterations; //debug
         (Interpret.*(iter->second))();
     }
 }
@@ -194,7 +205,7 @@ Interpreter::~Interpreter(){
 
 void Interpreter::_00E0(void){
     memset(HW.screen, 0, sizeof(HW.screen)); //clear the screen of pixels
-    Draw.clearScreenSDL();                //clear existing image w/SDL
+    Draw.clearScreenSDL();                   //clear existing image w/SDL
 }
 
 void Interpreter::_00EE(void){
@@ -210,8 +221,8 @@ void Interpreter::_1NNN(void){
 
 void Interpreter::_2NNN(void){
 
-    ++HW.stackPtr;
     HW.stack[HW.stackPtr] = HW.programCounter;
+    ++HW.stackPtr;
     HW.programCounter = NNN;
 }
 
@@ -354,7 +365,6 @@ void Interpreter::_DXYN(void){
         }
     };
 
-    HW.programCounter += 2; //consider removing pc+=2 since cowgood does not state it is needed
     HW.drawFlag = 1;
 }
 
@@ -416,13 +426,13 @@ void Interpreter::_FX33(void){
 }
 
 void Interpreter::_FX55(void){
-    for(uint8_t idx = 0; idx <= X; ++idx){
+    for(int idx = 0; idx <= X; ++idx){
         HW.memory[HW.indexRegister + idx] = HW.V[idx];
     }
 }
 
 void Interpreter::_FX65(void){
-    for(uint8_t idx = 0; idx <= X; ++idx){
+    for(int idx = 0; idx <= X; ++idx){
         HW.V[idx] = HW.memory[HW.indexRegister + idx];
     }
 }
