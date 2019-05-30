@@ -102,8 +102,8 @@ void Core::emulateSystem(void){
     interpretOpcode();
 
     if(HW.drawFlag == 1){
-        Draw.drawSDL(&HW);
-        HW.drawFlag = 0;
+        //Draw.drawSDL(&HW);
+        //HW.drawFlag = 0;
     }
 }
 
@@ -130,7 +130,7 @@ uint16_t Core::decodeOpcode(void){
 
     decodedOpcode = HW.opcode & 0xF0FF;
 
-    if((decodedOpcode == 0xF055) || decodedOpcode == 0xF065){
+    if(decodedOpcode == 0xF055 || decodedOpcode == 0xF065 || decodedOpcode == 0x00E0 || decodedOpcode == 0x00EE){
         return decodedOpcode;
     }
     else{
@@ -174,17 +174,19 @@ void Core::indexOpcodes(void){
 void Core::interpretOpcode(void){
     Interpreter Interpret;
     static int iterations = 0; //debug
-    int opcode = HW.programCounter;
 
     uint16_t rawOpcode = decodeOpcode(); // rawOpcode - opcode stripped of x, y, k values etc.
                                          // simplified for the purpose of accessing function from table
 
     auto iter = interpreterFunctions.find(rawOpcode);
-    printf("%x\n", rawOpcode);
+    auto n = NNN;
+    auto pc = HW.programCounter;
+
+    printf("iter: %i, opcode: %x, rawopcode: %x, pc: %i, NNN: %x\n", iterations, HW.opcode, rawOpcode, pc, n); //debug
 
     if(iter == interpreterFunctions.end()){
         fprintf(stderr, "Invalid opcode detected\n");
-        fprintf(stderr, "%i", iterations);
+        fprintf(stderr, "%i\n", iterations);
         exit(-2);
         //while debug, no exit() upon opcode error: release version should
         //exit on error
