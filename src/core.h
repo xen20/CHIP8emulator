@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#define  NNN (HW.opcode >> 4)
+#define  NNN (HW.opcode & 0x0FFF);
 #define  N   (HW.opcode &  0x000F)
 #define  X   (HW.opcode &  0x0F00) >> 8
 #define  Y   (HW.opcode &  0x00F0) >> 4

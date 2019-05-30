@@ -104,6 +104,7 @@ void Core::emulateSystem(void){
     if(HW.drawFlag == 1){
         //Draw.drawSDL(&HW);
         //HW.drawFlag = 0;
+        //currently segfaults, hence commented out...
     }
 }
 
@@ -351,7 +352,7 @@ void Interpreter::_CXKK(void){
 
 void Interpreter::_DXYN(void){
     //maximum sprite size is 8x15, where it is the height that is adjustable
-    HW.V[0xF] = 0;
+    /*HW.V[0xF] = 0;
     uint8_t current_pixel = 0;
 
     for(int idxY = 0; idxY < N; ++idxY){
@@ -366,8 +367,8 @@ void Interpreter::_DXYN(void){
             }
         }
     };
-
-    HW.drawFlag = 1;
+    HW.drawFlag = 1;*/
+    //currently segfaults, comment out...
 }
 
 void Interpreter::_EX9E(void){
