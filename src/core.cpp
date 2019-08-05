@@ -10,6 +10,9 @@
 #include "keyboard.h"
 #include "fontset.h"
 
+#include <ctime> //debug, generate opcode logs...
+#include <cstring>
+
 uint8_t      keystates[16];
 
 Hardware     HW;
@@ -438,4 +441,29 @@ void Interpreter::_FX65(void){
     for(int idx = 0; idx <= X; ++idx){
         HW.V[idx] = HW.memory[HW.indexRegister + idx];
     }
+}
+
+DebugUtils::DebugUtils(){
+    currentTime = getCurrentTime();
+}
+
+DebugUtils::~DebugUtils(){
+
+}
+
+void DebugUtils::opcodeToFile(char *opcode){
+
+    char* logName = "opcode_log";
+    char* finalName = strcat(logName, currentTime);
+
+    FILE *fp = NULL;
+
+    fopen()
+}
+
+char* DebugUtils::getCurrentTime(void){
+    time_t timer;
+
+    time_t currentTime = time(&timer);
+
 }

@@ -99,4 +99,14 @@ public:
     void _FX65(void);
 };
 
+class DebugUtils{
+    DebugUtils();
+    ~DebugUtils();
+public:
+    void opcodeToFile(char *opcode);
+private:
+    char* getCurrentTime(void);
+    char* currentTime;
+};
+
 #endif // CORE_H
