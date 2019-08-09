@@ -24,7 +24,11 @@
 #define HEX_B 'c'
 #define HEX_F 'v'
 
+#define DEBUG 'p'
+
 extern uint8_t keystates[16];
+extern uint8_t specialKeys[2];
+extern bool    _debug;
 
 class Keyboard
 {

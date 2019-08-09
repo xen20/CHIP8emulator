@@ -3,11 +3,22 @@
 
 #include <cstdint>
 
-#define  NNN (HW.opcode & 0x0FFF);
+#define  NNN (HW.opcode &  0x0FFF)
 #define  N   (HW.opcode &  0x000F)
 #define  X   (HW.opcode &  0x0F00) >> 8
 #define  Y   (HW.opcode &  0x00F0) >> 4
 #define  KK  (HW.opcode >> 8)
+
+class DebugUtils{
+public:
+    DebugUtils();
+    ~DebugUtils();
+    void logCurrentOpcode(char *buffer);
+private:
+    void getCurrentTime(void);
+    char currentTime[10];
+    bool firstExecution;
+};
 
 class Hardware{
 public:
@@ -49,6 +60,8 @@ private:
     uint16_t decodeOpcode(void);
     void indexOpcodes(void);
     void interpretOpcode(void);
+    char debugBuffer[100];
+    DebugUtils logger;
 };
 
 class Interpreter{
@@ -99,14 +112,6 @@ public:
     void _FX65(void);
 };
 
-class DebugUtils{
-    DebugUtils();
-    ~DebugUtils();
-public:
-    void opcodeToFile(char *opcode);
-private:
-    char* getCurrentTime(void);
-    char* currentTime;
-};
+
 
 #endif // CORE_H

@@ -1,5 +1,7 @@
 #include <cstring>        //memset(), size_t
 #include <cstdlib>        //exit()
+#include <ctime>          //for functions in DebugUtils
+#include <cstring>
 #include <unordered_map>
 
 #include <SDL2/SDL.h>
@@ -10,10 +12,9 @@
 #include "keyboard.h"
 #include "fontset.h"
 
-#include <ctime> //debug, generate opcode logs...
-#include <cstring>
-
 uint8_t      keystates[16];
+uint8_t      specialKeys[2];
+bool         _debug;
 
 Hardware     HW;
 
@@ -30,23 +31,19 @@ typedef          std::unordered_map<uint16_t, interpreterFptr> FunctionMap;
 FunctionMap interpreterFunctions;
 
 Hardware::Hardware(){
-    size_t memory_size   = sizeof(memory)/sizeof(memory[0]);
-    size_t stack_size    = sizeof(stack)/sizeof(stack[0]);
-    size_t register_size = sizeof(V)/sizeof(V[0]); //try removing these in favor
-    // of the following syntax: memset(array, 0, sizeof(array));
 
     programCounter = 0x200;
     opcode         = 0;
     stackPtr       = 0;
     indexRegister  = 0;
 
-    memset(memory, 0, memory_size);
-    memset(stack, 0, stack_size);
-    memset(V, 0, register_size);
+    memset(memory, 0, sizeof(memory));
+    memset(stack, 0, sizeof (stack));
+    memset(V, 0, sizeof(V));
     memset(screen, 0, sizeof(screen));
 
     loadFontset();
-    drawFlag  = 1;
+    drawFlag  = 0;
 }
 
 Hardware::~Hardware(){
@@ -105,9 +102,8 @@ void Core::emulateSystem(void){
     interpretOpcode();
 
     if(HW.drawFlag == 1){
-        //Draw.drawSDL(&HW);
-        //HW.drawFlag = 0;
-        //currently segfaults, hence commented out...
+        Draw.drawSDL(&HW);
+        HW.drawFlag = 0;
     }
 }
 
@@ -154,11 +150,11 @@ uint16_t Core::decodeOpcode(void){
 void Core::indexOpcodes(void){
     interpreterFptr opcodeFuncPtr[] = {&Interpreter::_00E0, &Interpreter::_00EE, &Interpreter::_1NNN, &Interpreter::_2NNN, &Interpreter::_3XKK,
                                        &Interpreter::_4XKK, &Interpreter::_5XY0, &Interpreter::_6XKK, &Interpreter::_7XKK, &Interpreter::_8XY0,
-                                       &Interpreter::_8XY1, &Interpreter::_8XY2, &Interpreter::_8XY3, &Interpreter::_8XY4,
-                                       &Interpreter::_8XY5, &Interpreter::_8XY6, &Interpreter::_8XY7, &Interpreter::_8XYE, &Interpreter::_9XY0,
-                                       &Interpreter::_ANNN, &Interpreter::_BNNN, &Interpreter::_CXKK, &Interpreter::_DXYN, &Interpreter::_EX9E,
-                                       &Interpreter::_EXA1, &Interpreter::_FX07, &Interpreter::_FX0A, &Interpreter::_FX15, &Interpreter::_FX18,
-                                       &Interpreter::_FX1E, &Interpreter::_FX29, &Interpreter::_FX33, &Interpreter::_FX55, &Interpreter::_FX65};
+                                       &Interpreter::_8XY1, &Interpreter::_8XY2, &Interpreter::_8XY3, &Interpreter::_8XY4, &Interpreter::_8XY5,
+                                       &Interpreter::_8XY6, &Interpreter::_8XY7, &Interpreter::_8XYE, &Interpreter::_9XY0, &Interpreter::_ANNN,
+                                       &Interpreter::_BNNN, &Interpreter::_CXKK, &Interpreter::_DXYN, &Interpreter::_EX9E, &Interpreter::_EXA1,
+                                       &Interpreter::_FX07, &Interpreter::_FX0A, &Interpreter::_FX15, &Interpreter::_FX18, &Interpreter::_FX1E,
+                                       &Interpreter::_FX29, &Interpreter::_FX33, &Interpreter::_FX55, &Interpreter::_FX65};
 
     uint16_t      opcodeFuncIdx[] =   {0x00E0, 0x00EE, 0x1000, 0x2000, 0x3000,
                                        0x4000, 0x5000, 0x6000, 0x7000, 0x8000,
@@ -176,28 +172,34 @@ void Core::indexOpcodes(void){
 }
 
 void Core::interpretOpcode(void){
+
     Interpreter Interpret;
-    static int iterations = 0; //debug
+    static int iterations = 0;
 
     uint16_t rawOpcode = decodeOpcode(); // rawOpcode - opcode stripped of x, y, k values etc.
                                          // simplified for the purpose of accessing function from table
 
     auto iter = interpreterFunctions.find(rawOpcode);
-    auto n = NNN;
-    auto pc = HW.programCounter;
 
-    printf("iter: %i, opcode: %x, rawopcode: %x, pc: %i, NNN: %x\n", iterations, HW.opcode, rawOpcode, pc, n); //debug
+    _debug = true;
+
+    if(_debug){
+        auto n = NNN;
+        auto pc = HW.programCounter;
+
+        snprintf(debugBuffer, 100, "iter: %i, opcode: %x, rawopcode: %x, pc: %i, NNN: %x\n", iterations, HW.opcode, rawOpcode, pc, n);
+        logger.logCurrentOpcode(debugBuffer);
+    }
+
 
     if(iter == interpreterFunctions.end()){
         fprintf(stderr, "Invalid opcode detected\n");
         fprintf(stderr, "%i\n", iterations);
-        exit(-2);
-        //while debug, no exit() upon opcode error: release version should
-        //exit on error
+        if(!_debug) exit(-2);
     }
     else{
-        ++iterations; //debug
-        (Interpret.*(iter->second))();
+        ++iterations; // Used in debug
+        (Interpret.*(iter->second))(); // Execute instruction
     }
 }
 
@@ -209,22 +211,30 @@ Interpreter::~Interpreter(){
 
 }
 
+// Full documentation available here as of 09.08.2019 :
+// http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#0.0
+
+// Clear the display
 void Interpreter::_00E0(void){
+
     memset(HW.screen, 0, sizeof(HW.screen)); //clear the screen of pixels
     Draw.clearScreenSDL();                   //clear existing image w/SDL
 }
 
+// Return from subroutine
 void Interpreter::_00EE(void){
 
     HW.programCounter = HW.stack[HW.stackPtr];
     --HW.stackPtr;
 }
 
+// Jump to memory location at NNN
 void Interpreter::_1NNN(void){
 
     HW.programCounter = NNN;
 }
 
+// Call subroutine at NNN
 void Interpreter::_2NNN(void){
 
     HW.stack[HW.stackPtr] = HW.programCounter;
@@ -232,30 +242,25 @@ void Interpreter::_2NNN(void){
     HW.programCounter = NNN;
 }
 
+// Skip next instruction if V[X] == KK
 void Interpreter::_3XKK(void){
 
-    if(HW.V[X] == KK){
-        //if program buggy, possibly change 3xkk,4xkk,5xy0 to pc +=4
-        //reasoning: skip next instruction while executing given instruction,
-        //hence two instructions = pc incremented twice
-        HW.programCounter += 2;
-    }
+    if(HW.V[X] == KK) HW.programCounter += 2;
 }
 
+// SKip next instruction if V[X] != KK
 void Interpreter::_4XKK(void){
 
-    if(HW.V[X] != KK){
-        HW.programCounter += 2;
-    }
+    if(HW.V[X] != KK) HW.programCounter += 2;
 }
 
+// Skip next instruction if V[X] == V[Y]
 void Interpreter::_5XY0(void){
 
-    if(HW.V[X] == HW.V[Y]){
-        HW.programCounter += 2;
-    }
+    if(HW.V[X] == HW.V[Y]) HW.programCounter += 2;
 }
 
+// Self-explanatory
 void Interpreter::_6XKK(void){
 
     HW.V[X] = KK;
@@ -271,23 +276,29 @@ void Interpreter::_8XY0(void){
     HW.V[X] = HW.V[Y];
 }
 
+// Bitwise OR on V[X] and V[Y], store result in V[X]
 void Interpreter::_8XY1(void){
 
     HW.V[X] |= HW.V[Y];
 }
 
+// Bitwise AND on V[X] and V[Y], store result in V[X]
 void Interpreter::_8XY2(void){
 
     HW.V[X] &= HW.V[Y];
 }
 
+// Bitwise XOR on V[X] and V[Y], store result in V[X]
 void Interpreter::_8XY3(void){
 
     HW.V[X] ^= HW.V[Y];
 }
 
+/*The values of V[X] and V[Y] are added together. If the result is greater than 8 bits
+ * (i.e., > 255,) V[F] is set to 1, otherwise 0.
+ * Only the lowest 8 bits of the result are kept, and stored in V[X].*/
 void Interpreter::_8XY4(void){
-    //implemented as idea on website, but may need a rewrite.
+
     uint16_t  temp = 0;
 
     temp = HW.V[X] + HW.V[Y];
@@ -298,6 +309,8 @@ void Interpreter::_8XY4(void){
     HW.V[X] = temp >> 8;
 }
 
+/*If V[X] > V[Y], then V[F] is set to 1, otherwise 0.
+ * Then V[Y] is subtracted from V[X], and the results stored in V[X].*/
 void Interpreter::_8XY5(void){
 
     if(HW.V[X] > HW.V[Y]) HW.V[0xF] = 1;
@@ -306,14 +319,16 @@ void Interpreter::_8XY5(void){
     HW.V[X] -= HW.V[Y];
 }
 
+// If LSB of V[X] is 1, V[F] = 1, then divide V[X] by 2
 void Interpreter::_8XY6(void){
 
     if((HW.V[X] & 0x1) == 1) HW.V[0xF] = 1;
     else                     HW.V[0xF] = 0;
 
-    HW.V[X] >>= 1; //another way to divide by 2
+    HW.V[X] >>= 1; // Neat bitwise way of dividing by two
 }
 
+// V[X] = V[Y] - V[X], V[F] = NOT Borrow
 void Interpreter::_8XY7(void){
 
     if(HW.V[Y] > HW.V[X]) HW.V[0xF] = 1;
@@ -322,6 +337,7 @@ void Interpreter::_8XY7(void){
     HW.V[X] = HW.V[Y] - HW.V[X];
 }
 
+// If MSB of V[X} = 1, V[F] = 1, then multiply V[X] by 2
 void Interpreter::_8XYE(void){
 
     //maybe take a look at this again and see if desired value is acquired!
@@ -329,14 +345,16 @@ void Interpreter::_8XYE(void){
     if((HW.V[X] >> 7) == 1 ) HW.V[0xF] = 1;
     else                     HW.V[0xF] = 0;
 
-    HW.V[X] <<= 1;  //another way to mul by 2
+    HW.V[X] <<= 1;  // Bitwise *2
 }
 
+// If V[X] != V[Y], skip next inst.
 void Interpreter::_9XY0(void){
-    //same deal as 4xKK
+
     if(HW.V[X] != HW.V[Y]) HW.programCounter += 2;
 }
 
+// Self-explanatory
 void Interpreter::_ANNN(void){
 
     HW.indexRegister = NNN;
@@ -347,15 +365,26 @@ void Interpreter::_BNNN(void){
     HW.programCounter = NNN+HW.V[0];
 }
 
+/* Generate random num between 0 and 255, bitwise AND that
+   Value with KK, result in V[X]*/
 void Interpreter::_CXKK(void){
+
     uint8_t randomNum = genRandomNum();
 
     HW.V[X] = (randomNum & KK);
 }
 
+/*Display n-byte sprite starting at memory location I at (V[X], V[Y]), V[F] = collision.
+The interpreter reads n bytes from memory, starting at the address stored in I.
+These bytes are then displayed as sprites on screen at coordinates (Vx, Vy).
+Sprites are XORed onto the existing screen.
+If this causes any pixels to be erased, V[F] is set to 1, otherwise it is set to 0.
+If the sprite is positioned so part of it is outside the coordinates of the display,
+it wraps around to the opposite side of the screen.*/
 void Interpreter::_DXYN(void){
+
     //maximum sprite size is 8x15, where it is the height that is adjustable
-    /*HW.V[0xF] = 0;
+    HW.V[0xF] = 0;
     uint8_t current_pixel = 0;
 
     for(int idxY = 0; idxY < N; ++idxY){
@@ -370,22 +399,25 @@ void Interpreter::_DXYN(void){
             }
         }
     };
-    HW.drawFlag = 1;*/
-    //currently segfaults, comment out...
+    HW.drawFlag = 1;
 }
 
+// Skip next instruction if key with the value of V[X] is pressed
 void Interpreter::_EX9E(void){
     if(keystates[HW.V[X]] == 1) HW.programCounter += 2;
 }
 
+// Same as above if not pressed
 void Interpreter::_EXA1(void){
     if(keystates[HW.V[X]] == 0) HW.programCounter += 2;
 }
 
+// Self-explanatory
 void Interpreter::_FX07(void){
     HW.V[X] = HW.delayTimer;
 }
 
+//Wait for a key press, store the value of the key in V[X]
 void Interpreter::_FX0A(void){
     //if buggy, take a look at this again and see if a delay/exec stop can
     //be written using some SDL function instead of rolling PC back while
@@ -398,12 +430,11 @@ void Interpreter::_FX0A(void){
             break;
         }
     }
-    if (temp != -1)
-        HW.V[X] = temp;
-    else
-        HW.programCounter -= 2;
+    if (temp != -1) HW.V[X] = temp;
+    else HW.programCounter -= 2;
 }
 
+// Self-explanatory
 void Interpreter::_FX15(void){
 
     HW.delayTimer = HW.V[X];
@@ -414,15 +445,18 @@ void Interpreter::_FX18(void){
     HW.soundTimer = HW.V[X];
 }
 
+// I = I + V[X]
 void Interpreter::_FX1E(void){
 
     HW.indexRegister += HW.V[X];
 }
 
+// I = location of sprite for digit V[X]
 void Interpreter::_FX29(void){
     HW.indexRegister = HW.V[X] * 0x5;
 }
 
+// Store BCD representation of V[X] in memory locations I, I+1, and I+2
 void Interpreter::_FX33(void){
     //Refer wikipedia/BCD 8421
     HW.memory[HW.indexRegister]     =  HW.V[X] / 100;
@@ -431,12 +465,14 @@ void Interpreter::_FX33(void){
     HW.programCounter += 2;
 }
 
+// Store register contents V[0] through V[X] in memory starting at location I
 void Interpreter::_FX55(void){
     for(int idx = 0; idx <= X; ++idx){
         HW.memory[HW.indexRegister + idx] = HW.V[idx];
     }
 }
 
+// Read register contents V[0] through V[X] from memory starting at location I
 void Interpreter::_FX65(void){
     for(int idx = 0; idx <= X; ++idx){
         HW.V[idx] = HW.memory[HW.indexRegister + idx];
@@ -444,26 +480,35 @@ void Interpreter::_FX65(void){
 }
 
 DebugUtils::DebugUtils(){
-    currentTime = getCurrentTime();
+    getCurrentTime();
 }
 
 DebugUtils::~DebugUtils(){
 
 }
 
-void DebugUtils::opcodeToFile(char *opcode){
+void DebugUtils::logCurrentOpcode(char *data){
 
-    char* logName = "opcode_log";
-    char* finalName = strcat(logName, currentTime);
+    char buffer[20] = "opcode_log";
+    strcat(buffer, currentTime);
+    char *finalName = strcat(buffer, "_.txt");
 
     FILE *fp = NULL;
 
-    fopen()
+    fp = fopen(finalName, "a+");
+
+    fprintf(fp, data);
+
+    fclose(fp);
 }
 
-char* DebugUtils::getCurrentTime(void){
+void DebugUtils::getCurrentTime(void){
+
     time_t timer;
+    struct tm *timeInfo;
 
-    time_t currentTime = time(&timer);
+    time(&timer);
+    timeInfo = localtime(&timer);
 
+    strftime(currentTime, 10, "%H%M%S", timeInfo);
 }
