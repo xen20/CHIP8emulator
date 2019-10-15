@@ -4,7 +4,7 @@
 #include <cstring>
 #include <unordered_map>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "core.h"
 #include "random.h"
@@ -74,7 +74,7 @@ void Core::loadROM(char *ROM){
     ROMStream = fopen(ROM, "rb");
 
     if(ROMStream == NULL){
-        perror("Failed to load rom: ");
+        fprintf(stderr, "Failed to load ROM: %s", ROM);
         exit(-1);
     }
     else{

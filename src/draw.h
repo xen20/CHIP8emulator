@@ -5,7 +5,7 @@
 #define WINDOW_HEIGHT 32
 #define WINDOW_TITLE  "CHIP8 Emulator"
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "core.h"
 
 extern uint8_t chip8_fontset[80];

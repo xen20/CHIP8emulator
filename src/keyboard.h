@@ -2,7 +2,7 @@
 #define KEYBOARD_H
 
 #include <cstdint>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #define HEX_1 '1'
 #define HEX_2 '2'
