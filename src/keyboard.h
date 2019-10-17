@@ -33,13 +33,14 @@ extern bool    _debug;
 class Keyboard
 {
 public:
-    Keyboard(SDL_Event _event, SDL_Window *_win, SDL_Renderer *_ren);
+
+    Keyboard(SDL_Event *_event);
     ~Keyboard();
     void pollKeyboard(bool *isRunning);
+
 private:
-    SDL_Event    event;
-    SDL_Window   *win;
-    SDL_Renderer *ren;
+
+    SDL_Event    *event;
     void    Keypressed(char key);
     void    Keyreleased(char key);
 };

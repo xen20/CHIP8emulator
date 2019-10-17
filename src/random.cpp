@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 uint8_t genRandomNum(void){
+
     uint8_t randomNum = 0;
 
     srand(time(NULL));

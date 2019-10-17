@@ -4,7 +4,8 @@
 
 #include "keyboard.h"
 
-Keyboard::Keyboard(SDL_Event _event, SDL_Window *_win, SDL_Renderer *_ren){
+Keyboard::Keyboard(SDL_Event *_event){
+
     size_t  keystate_amount = sizeof(keystates)/sizeof(keystates[0]);
 
     memset(keystates, 0, keystate_amount);
@@ -13,8 +14,6 @@ Keyboard::Keyboard(SDL_Event _event, SDL_Window *_win, SDL_Renderer *_ren){
         specialKeys[idx] = false;
 
     event = _event;
-    win = _win;
-    ren = _ren;
 }
 
 Keyboard::~Keyboard(){
@@ -22,21 +21,23 @@ Keyboard::~Keyboard(){
 }
 
 void Keyboard::pollKeyboard(bool *isRunning){
+
     char *fullKeyName = NULL;
     char  pressedKey  = 0;
 
-    if(SDL_PollEvent(&event)){
-        switch (event.type) {
+    if(SDL_PollEvent(*&event)){
+
+        switch (event->type) {
         case SDL_QUIT:
             *isRunning = false;
             break;
         case SDL_KEYDOWN:
-            fullKeyName = (char*)SDL_GetKeyName(event.key.keysym.sym);
+            fullKeyName = (char*)SDL_GetKeyName(event->key.keysym.sym);
             pressedKey  = tolower(fullKeyName[0]);
             Keypressed(pressedKey);
             break;
         case SDL_KEYUP:
-            fullKeyName = (char*)SDL_GetKeyName(event.key.keysym.sym);
+            fullKeyName = (char*)SDL_GetKeyName(event->key.keysym.sym);
             pressedKey  = tolower(fullKeyName[0]);
             Keyreleased(pressedKey);
             break;
@@ -47,6 +48,7 @@ void Keyboard::pollKeyboard(bool *isRunning){
 //purely for readability, let us divide two massive switch cases into two functions
 
 void Keyboard::Keypressed(const char key){
+
     switch(key){
         case HEX_0:
             keystates[0] = 1;
@@ -104,6 +106,7 @@ void Keyboard::Keypressed(const char key){
 }
 
 void Keyboard::Keyreleased(const char key){
+
     switch(key){
         case HEX_0:
             keystates[0] = 0;
