@@ -1,17 +1,18 @@
 #ifndef DEBUGUTILS_H
 #define DEBUGUTILS_H
 
-class DebugUtils{
-public:
+class DebugUtils
+{
+    public:
 
-    DebugUtils();
-    ~DebugUtils();
-    void logCurrentOpcode(char *buffer);
+        DebugUtils();
+        ~DebugUtils();
+        void logCurrentOpcode(char *buffer);
 
-private:
+    private:
 
-    void getCurrentTime(void);
-    char currentTime[10];
-    bool firstExecution;
+        void getCurrentTime(void);
+        char currentTime[10];
+        bool firstExecution;
 };
 #endif // DEBUGUTILS_H

@@ -32,17 +32,17 @@ extern bool    _debug;
 
 class Keyboard
 {
-public:
+    public:
 
-    Keyboard(SDL_Event *_event);
-    ~Keyboard();
-    void pollKeyboard(bool *isRunning);
+        Keyboard(SDL_Event *_event);
+        ~Keyboard();
+        void pollKeyboard(bool *isRunning);
 
-private:
+    private:
 
-    SDL_Event    *event;
-    void    Keypressed(char key);
-    void    Keyreleased(char key);
+        SDL_Event    *event;
+        void    Keypressed(char key);
+        void    Keyreleased(char key);
 };
 
 #endif // KEYBOARD_H

@@ -12,18 +12,18 @@ extern uint8_t chip8_fontset[80];
 
 class Draw
 {
-public:
+    public:
 
-    Draw();
-    void initSDL(SDL_Window **_win, SDL_Renderer **_ren);
-    void drawSDL(Hardware *HW);
-    void closeSDL(void);
-    void clearScreenSDL(void);
+        Draw();
+        void initSDL(SDL_Window **_win, SDL_Renderer **_ren);
+        void drawSDL(Hardware *HW);
+        void closeSDL(void);
+        void clearScreenSDL(void);
 
-private:
+    private:
 
-    SDL_Window   *win;
-    SDL_Renderer *ren;
+        SDL_Window   *win;
+        SDL_Renderer *ren;
 };
 
 #endif // DRAW_H

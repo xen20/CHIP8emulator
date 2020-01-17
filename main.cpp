@@ -4,7 +4,8 @@
 
 int main(int argc, char **argv)
 {
-    if(argc < 2){
+    if (argc < 2)
+    {
         fprintf(stderr, "USAGE: [PROGRAM] [ROM]\n");
         return -1;
     }
@@ -15,7 +16,8 @@ int main(int argc, char **argv)
     emulator.loadROM(rom_to_load);
     emulator.initSDL();
 
-    while (emulator.isRunning) {
+    while (emulator.isRunning)
+    {
         emulator.emulateSystem();
     }
 

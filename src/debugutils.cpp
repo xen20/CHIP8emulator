@@ -4,17 +4,18 @@
 
 #include "debugutils.h"
 
-DebugUtils::DebugUtils(){
-
+DebugUtils::DebugUtils()
+{
     getCurrentTime();
 }
 
-DebugUtils::~DebugUtils(){
+DebugUtils::~DebugUtils()
+{
 
 }
 
-void DebugUtils::logCurrentOpcode(char *data){
-
+void DebugUtils::logCurrentOpcode(char *data)
+{
     char buffer[20] = "opcode_log";
     strcat(buffer, currentTime);
     char *finalName = strcat(buffer, "_.txt");
@@ -28,8 +29,8 @@ void DebugUtils::logCurrentOpcode(char *data){
     fclose(fp);
 }
 
-void DebugUtils::getCurrentTime(void){
-
+void DebugUtils::getCurrentTime(void)
+{
     time_t timer;
     struct tm *timeInfo;
 
