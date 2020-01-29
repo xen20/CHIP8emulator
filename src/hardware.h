@@ -20,7 +20,6 @@ class Hardware
         uint16_t opcode;
         uint8_t  memory[4096];
 
-        //uint8_t  screen[64][32];
         uint8_t  screen[2048];
 
         uint8_t  V[16];

@@ -8,7 +8,7 @@ class Interpreter
     public:
 
         Interpreter(Hardware *mainHardware);
-        ~Interpreter();
+        virtual ~Interpreter();
         void _00E0(void);
         void _00EE(void);
         void _1NNN(void);

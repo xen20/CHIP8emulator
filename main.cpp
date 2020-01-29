@@ -1,9 +1,15 @@
 #include <cstdio>
+#include "src/tests.h"
 
 #include "src/core.h"
 
+const bool UNIT_TEST = true;
+
 int main(int argc, char **argv)
 {
+    if (UNIT_TEST)
+        emutest::Executor(argc, argv);
+
     if (argc < 2)
     {
         fprintf(stderr, "USAGE: [PROGRAM] [ROM]\n");
@@ -23,3 +29,6 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+
+
