@@ -310,16 +310,12 @@ void Interpreter::_FX33(void)
 void Interpreter::_FX55(void)
 {
     for (int idx = 0; idx <= X; ++idx)
-    {
         HW->memory[HW->indexRegister + idx] = HW->V[idx];
-    }
 }
 
 // Read register contents V[0] through V[X] from memory starting at location I
 void Interpreter::_FX65(void)
 {
     for (int idx = 0; idx <= X; ++idx)
-    {
         HW->V[idx] = HW->memory[HW->indexRegister + idx];
-    }
 }

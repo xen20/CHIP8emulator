@@ -54,7 +54,15 @@ TEST(Interpreter, 1NNN)
 
 TEST(Interpreter, 2NNN)
 {
-    // TODO: Multiple assertion...
+    InterpreterTests _interpreterTests;
+
+    _interpreterTests._hw.programCounter = 0xFFF;
+    _interpreterTests._hw.opcode = 0xFFFF;
+    auto sPtr = _interpreterTests._hw.stackPtr = 0;
+    _interpreterTests._interpreter._2NNN();
+
+    ASSERT_EQ(_interpreterTests._hw.stack[sPtr], _interpreterTests._hw.programCounter);
+    ASSERT_EQ(++sPtr, _interpreterTests._hw.stackPtr);
 }
 
 TEST(Interpreter, 3XKK)
@@ -62,7 +70,7 @@ TEST(Interpreter, 3XKK)
     InterpreterTests _interpreterTests;
 
     _interpreterTests._hw.opcode = 0xFFFF;
-    auto dummyPC = _interpreterTests._hw.programCounter = 0;
+    _interpreterTests._hw.programCounter = 0;
 
     _interpreterTests._hw.V[0xF] = 0xFF;
     _interpreterTests._interpreter._3XKK();
@@ -215,4 +223,61 @@ TEST(Interpreter, FX1E)
     _interpreterTests._interpreter._FX1E();
 
     EXPECT_EQ(reference, _interpreterTests._hw.indexRegister);
+}
+
+TEST(Interpreter, FX29)
+{
+    InterpreterTests _interpreterTests;
+
+    _interpreterTests._hw.opcode = 0xFFFF;
+    auto testRegister = _interpreterTests._hw.V[0xF] = 0xF;
+
+    _interpreterTests._interpreter._FX29();
+
+    EXPECT_EQ(_interpreterTests._hw.indexRegister, testRegister * 0x5);
+}
+
+TEST(Interpreter, FX33)
+{
+    // mul assert
+}
+
+TEST(Interpreter, FX55)
+{
+    InterpreterTests _interpreterTests;
+
+    const int numberOfElementsInRegisters = 16;
+
+    memset(&_interpreterTests._hw.V, 1, numberOfElementsInRegisters);
+    _interpreterTests._hw.opcode = 0xFFF;
+    _interpreterTests._hw.indexRegister = 0xFF;
+    _interpreterTests._interpreter._FX55();
+
+    for(int i = 0; i < numberOfElementsInRegisters; ++i)
+    {
+        SCOPED_TRACE(i);
+        ASSERT_EQ(_interpreterTests._hw.V[i],
+                  _interpreterTests._hw.memory[_interpreterTests._hw.indexRegister + i]);
+    }
+
+}
+
+TEST(Interpreter, FX65)
+{
+    InterpreterTests _interpreterTests;
+
+    const int numberOfElementsInRegisters = 16;
+
+    memset(&_interpreterTests._hw.memory, 1, numberOfElementsInRegisters);
+    _interpreterTests._hw.opcode = 0xFFF;
+    _interpreterTests._hw.indexRegister = 0xFF;
+    _interpreterTests._interpreter._FX65();
+
+    for(int i = 0; i < numberOfElementsInRegisters; ++i)
+    {
+        SCOPED_TRACE(i);
+        ASSERT_EQ(_interpreterTests._hw.V[i],
+                  _interpreterTests._hw.memory[_interpreterTests._hw.indexRegister + i]);
+    }
+
 }
