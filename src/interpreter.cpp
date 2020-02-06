@@ -22,14 +22,12 @@ Interpreter::~Interpreter()
 void Interpreter::_00E0(void)
 {
     memset(HW->screen, 0, sizeof(HW->screen)); //clear the screen of pixels
-    //Draw.clearScreenSDL();                   //clear existing image w/SDL
 }
 
 // Return from subroutine
 void Interpreter::_00EE(void)
 {
-    HW->programCounter = HW->stack[HW->stackPtr];
-    --HW->stackPtr;
+    HW->programCounter = HW->stack[--HW->stackPtr];
 }
 
 // Jump to memory location at NNN

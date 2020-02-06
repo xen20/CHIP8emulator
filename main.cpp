@@ -3,7 +3,7 @@
 
 #include "src/core.h"
 
-const bool UNIT_TEST = true;
+const bool UNIT_TEST = false;
 
 int main(int argc, char **argv)
 {

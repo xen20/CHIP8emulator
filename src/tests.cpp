@@ -36,7 +36,25 @@ InterpreterTests SetUpTests(void)
 
 TEST(Interpreter, 00E0)
 {
-    //TODO: See how to perform multiple assertion
+    InterpreterTests _interpreterTests;
+
+    _interpreterTests._interpreter._00E0();
+
+    for(auto i = 0; i < sizeof(_interpreterTests._hw.screen); ++i)
+        ASSERT_EQ(_interpreterTests._hw.screen[i], 0);
+}
+
+TEST(Interpreter, 00EE)
+{
+    InterpreterTests _interpreterTests;
+
+    _interpreterTests._hw.stackPtr = 0xF;
+    _interpreterTests._hw.stack[0xE] = 0xFFFF;
+
+    _interpreterTests._interpreter._00EE();
+
+    ASSERT_EQ(_interpreterTests._hw.programCounter, 0xFFFF);
+    ASSERT_EQ(_interpreterTests._hw.stackPtr, 0xE);
 }
 
 TEST(Interpreter, 1NNN)
@@ -49,7 +67,7 @@ TEST(Interpreter, 1NNN)
     _interpreterTests._interpreter._1NNN();
 
     //Assert
-    EXPECT_EQ(_interpreterTests._hw.programCounter, 0x0FFF);
+    ASSERT_EQ(_interpreterTests._hw.programCounter, 0x0FFF);
 }
 
 TEST(Interpreter, 2NNN)
@@ -75,7 +93,7 @@ TEST(Interpreter, 3XKK)
     _interpreterTests._hw.V[0xF] = 0xFF;
     _interpreterTests._interpreter._3XKK();
 
-    EXPECT_EQ(_interpreterTests._hw.programCounter, 2);
+    ASSERT_EQ(_interpreterTests._hw.programCounter, 2);
 }
 
 TEST(Interpreter, 6XKK)
@@ -85,7 +103,7 @@ TEST(Interpreter, 6XKK)
     _interpreterTests._hw.opcode = 0xFFFF;
     _interpreterTests._interpreter._6XKK();
 
-    EXPECT_EQ(_interpreterTests._hw.V[0xF], _interpreterTests._hw.opcode & 0x00FF);
+    ASSERT_EQ(_interpreterTests._hw.V[0xF], _interpreterTests._hw.opcode & 0x00FF);
 }
 
 TEST(Interpreter, 7XKK)
@@ -95,7 +113,7 @@ TEST(Interpreter, 7XKK)
     _interpreterTests._hw.opcode = 0xFFFF;
     _interpreterTests._interpreter._7XKK();
 
-    EXPECT_EQ(_interpreterTests._hw.V[0xF], _interpreterTests._hw.opcode & 0x00FF);
+    ASSERT_EQ(_interpreterTests._hw.V[0xF], _interpreterTests._hw.opcode & 0x00FF);
 }
 
 TEST(Interpreter, 8XY0)
@@ -107,7 +125,7 @@ TEST(Interpreter, 8XY0)
 
     _interpreterTests._interpreter._8XY0();
 
-    EXPECT_EQ(_interpreterTests._hw.V[2], _interpreterTests._hw.V[3]);
+    ASSERT_EQ(_interpreterTests._hw.V[2], _interpreterTests._hw.V[3]);
 }
 
 TEST(Interpreter, 8XY1)
@@ -117,7 +135,7 @@ TEST(Interpreter, 8XY1)
     auto _referenceHWX = _interpreterTests._hw.V[2] | _interpreterTests._hw.V[3];
     _interpreterTests._interpreter._8XY1();
 
-    EXPECT_EQ(_referenceHWX, _interpreterTests._hw.V[2]);
+    ASSERT_EQ(_referenceHWX, _interpreterTests._hw.V[2]);
 }
 
 TEST(Interpreter, 8XY2)
@@ -127,7 +145,7 @@ TEST(Interpreter, 8XY2)
     auto _referenceHWX = _interpreterTests._hw.V[2] & _interpreterTests._hw.V[3];
     _interpreterTests._interpreter._8XY2();
 
-    EXPECT_EQ(_referenceHWX, _interpreterTests._hw.V[2]);
+    ASSERT_EQ(_referenceHWX, _interpreterTests._hw.V[2]);
 }
 
 TEST(Interpreter, 8XY3)
@@ -137,7 +155,7 @@ TEST(Interpreter, 8XY3)
     auto _referenceHWX = _interpreterTests._hw.V[2] ^ _interpreterTests._hw.V[3];
     _interpreterTests._interpreter._8XY3();
 
-    EXPECT_EQ(_referenceHWX, _interpreterTests._hw.V[2]);
+    ASSERT_EQ(_referenceHWX, _interpreterTests._hw.V[2]);
 }
 
 TEST(Interpreter, 8XY4)
@@ -148,10 +166,74 @@ TEST(Interpreter, 8XY4)
 
     _interpreterTests._interpreter._8XY4();
 
-    EXPECT_EQ(_interpreterTests._hw.V[0xF], 1);
+    ASSERT_EQ(_interpreterTests._hw.V[0xF], 1);
 }
 
-// Next tests are a significant amount of multiple assert...
+TEST(Interpreter, 8XY5)
+{
+    // Multiple assert. Assert case 1 for now.
+
+    auto _interpreterTests = SetUpTests();
+
+    _interpreterTests._interpreter._8XY4();
+
+    ASSERT_EQ(_interpreterTests._hw.V[0xF], 1);
+}
+
+//TEST(Interpreter, 8XY4)
+//{
+//    // Multiple assert. Assert case 1 for now.
+
+//    auto _interpreterTests = SetUpTests();
+
+//    _interpreterTests._interpreter._8XY4();
+
+//    ASSERT_EQ(_interpreterTests._hw.V[0xF], 1);
+//}
+
+//TEST(Interpreter, 8XY4)
+//{
+//    // Multiple assert. Assert case 1 for now.
+
+//    auto _interpreterTests = SetUpTests();
+
+//    _interpreterTests._interpreter._8XY4();
+
+//    ASSERT_EQ(_interpreterTests._hw.V[0xF], 1);
+//}
+
+//TEST(Interpreter, 8XY4)
+//{
+//    // Multiple assert. Assert case 1 for now.
+
+//    auto _interpreterTests = SetUpTests();
+
+//    _interpreterTests._interpreter._8XY4();
+
+//    ASSERT_EQ(_interpreterTests._hw.V[0xF], 1);
+//}
+
+//TEST(Interpreter, 8XY4)
+//{
+//    // Multiple assert. Assert case 1 for now.
+
+//    auto _interpreterTests = SetUpTests();
+
+//    _interpreterTests._interpreter._8XY4();
+
+//    ASSERT_EQ(_interpreterTests._hw.V[0xF], 1);
+//}
+
+//TEST(Interpreter, 8XY4)
+//{
+//    // Multiple assert. Assert case 1 for now.
+
+//    auto _interpreterTests = SetUpTests();
+
+//    _interpreterTests._interpreter._8XY4();
+
+//    ASSERT_EQ(_interpreterTests._hw.V[0xF], 1);
+//}
 
 TEST(Interpreter, ANNN)
 {
@@ -160,7 +242,7 @@ TEST(Interpreter, ANNN)
     _interpreterTests._hw.opcode = 0xFFFF;
     _interpreterTests._interpreter._ANNN();
 
-    EXPECT_EQ(_interpreterTests._hw.indexRegister, _interpreterTests._hw.opcode & 0x0FFF);
+    ASSERT_EQ(_interpreterTests._hw.indexRegister, _interpreterTests._hw.opcode & 0x0FFF);
 }
 
 TEST(Interpreter, BNNN)
@@ -171,7 +253,7 @@ TEST(Interpreter, BNNN)
     _interpreterTests._hw.V[0] = 0x1;
     _interpreterTests._interpreter._BNNN();
 
-    EXPECT_EQ(_interpreterTests._hw.programCounter, _interpreterTests._hw.opcode & 0x0FFF + 0x1);
+    ASSERT_EQ(_interpreterTests._hw.programCounter, _interpreterTests._hw.opcode & 0x0FFF + 0x1);
 }
 
 // Keystates being external impedes keyboard tests. Include a keyboard object in interpreter?
@@ -185,7 +267,7 @@ TEST(Interpreter, FX07)
     _interpreterTests._hw.opcode = 0xFFFF;
     _interpreterTests._interpreter._FX07();
 
-    EXPECT_EQ(_interpreterTests._hw.V[0xF], _interpreterTests._hw.delayTimer);
+    ASSERT_EQ(_interpreterTests._hw.V[0xF], _interpreterTests._hw.delayTimer);
 }
 
 TEST(Interpreter, FX15)
@@ -196,7 +278,7 @@ TEST(Interpreter, FX15)
     _interpreterTests._hw.V[0xF] = 0xF;
     _interpreterTests._interpreter._FX15();
 
-    EXPECT_EQ(_interpreterTests._hw.delayTimer, _interpreterTests._hw.V[0xF]);
+    ASSERT_EQ(_interpreterTests._hw.delayTimer, _interpreterTests._hw.V[0xF]);
 }
 
 TEST(Interpreter, FX18)
@@ -207,7 +289,7 @@ TEST(Interpreter, FX18)
     _interpreterTests._hw.V[0xF] = 0xF;
     _interpreterTests._interpreter._FX18();
 
-    EXPECT_EQ(_interpreterTests._hw.soundTimer, _interpreterTests._hw.V[0xF]);
+    ASSERT_EQ(_interpreterTests._hw.soundTimer, _interpreterTests._hw.V[0xF]);
 }
 
 
@@ -222,7 +304,7 @@ TEST(Interpreter, FX1E)
     auto reference = _interpreterTests._hw.indexRegister + 0xF;
     _interpreterTests._interpreter._FX1E();
 
-    EXPECT_EQ(reference, _interpreterTests._hw.indexRegister);
+    ASSERT_EQ(reference, _interpreterTests._hw.indexRegister);
 }
 
 TEST(Interpreter, FX29)
@@ -234,7 +316,7 @@ TEST(Interpreter, FX29)
 
     _interpreterTests._interpreter._FX29();
 
-    EXPECT_EQ(_interpreterTests._hw.indexRegister, testRegister * 0x5);
+    ASSERT_EQ(_interpreterTests._hw.indexRegister, testRegister * 0x5);
 }
 
 TEST(Interpreter, FX33)

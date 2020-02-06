@@ -13,7 +13,7 @@ typedef std::unordered_map<uint16_t, interpreterFptr> FunctionMap;
 
 FunctionMap interpreterFunctions;
 
-Core::Core() : KBD(&this->event), Interpret(&this->HW)
+Core::Core() : Interpret(&this->HW),  KBD(&this->event)
 {
     indexOpcodes();
 
