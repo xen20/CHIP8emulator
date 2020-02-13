@@ -22,6 +22,7 @@ Interpreter::~Interpreter()
 void Interpreter::_00E0(void)
 {
     memset(HW->screen, 0, sizeof(HW->screen)); //clear the screen of pixels
+    HW->drawFlag = true;
 }
 
 // Return from subroutine
@@ -104,7 +105,7 @@ void Interpreter::_8XY3(void)
  * Only the lowest 8 bits of the result are kept, and stored in V[X].*/
 void Interpreter::_8XY4(void)
 {
-    uint16_t  temp = 0;
+    uint16_t temp = 0;
 
     temp = HW->V[X] + HW->V[Y];
 
@@ -113,17 +114,19 @@ void Interpreter::_8XY4(void)
     else
         HW->V[0xF] = 0;
 
-    HW->V[X] = temp >> 8;
+    HW->V[X] = temp;
 }
 
 /*If V[X] > V[Y], then V[F] is set to 1, otherwise 0.
  * Then V[Y] is subtracted from V[X], and the results stored in V[X].*/
 void Interpreter::_8XY5(void)
 {
-    if (HW->V[X] > HW->V[Y])
-        HW->V[0xF] = 1;
-    else
-        HW->V[0xF] = 0;
+    HW->V[0xF] = HW->V[X] > HW->V[Y] ? 1 : 0;
+
+//    if (HW->V[X] > HW->V[Y])
+//        HW->V[0xF] = 1;
+//    else
+//        HW->V[0xF] = 0;
 
     HW->V[X] -= HW->V[Y];
 }
@@ -301,7 +304,6 @@ void Interpreter::_FX33(void)
     HW->memory[HW->indexRegister]     =  HW->V[X] / 100;
     HW->memory[HW->indexRegister + 1] = (HW->V[X] / 10) % 10;
     HW->memory[HW->indexRegister + 2] = (HW->V[X] % 100) % 10;
-    HW->programCounter += 2;
 }
 
 // Store register contents V[0] through V[X] in memory starting at location I

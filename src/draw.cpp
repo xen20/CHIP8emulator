@@ -20,8 +20,6 @@ void Draw::initSDL(SDL_Window **_win, SDL_Renderer **_ren)
                                  SCREEN_HEIGHT, SCREEN_WIDTH, SDL_WINDOW_RESIZABLE);
         *_ren = SDL_CreateRenderer(*_win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-        auto a = &*_win;
-
         win = *_win;
         ren = *_ren;
 
@@ -46,8 +44,6 @@ void Draw::drawSDL(Hardware *HW)
 
     SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
 
-    uint8_t current_pixel = 0;
-
     HW->drawFlag = 0;
 
     // Store pixels in temporary buffer
@@ -58,7 +54,7 @@ void Draw::drawSDL(Hardware *HW)
     }
 
     // Update SDL texture
-    SDL_UpdateTexture(sdlTexture, NULL, pixels, 64 * sizeof(Uint32));
+    SDL_UpdateTexture(sdlTexture, NULL, pixels, 64 * sizeof(uint32_t));
     // Clear screen and render
     SDL_RenderClear(ren);
     SDL_RenderCopy(ren, sdlTexture, NULL, NULL);

@@ -1,6 +1,8 @@
 ﻿#include <cstdlib>        //exit()
 #include <cstring>
 #include <unordered_map>
+#include <thread>
+#include <chrono>
 
 #include "core.h"
 #include "interpreter.h"
@@ -71,9 +73,22 @@ void Core::emulateSystem(void)
     interpretOpcode();
 
     if (HW.drawFlag == 1)
-    {
         DR.drawSDL(&HW);
-        HW.drawFlag = 0;
+
+    if(HW.delayTimer > 0)
+    {
+        //std::this_thread::sleep_for(std::chrono::milliseconds(17));
+        --HW.delayTimer;
+    }
+
+
+    if(HW.soundTimer > 0)
+    {
+        if(HW.soundTimer == 1)
+            printf("BEEP!\n");
+
+        //std::this_thread::sleep_for(std::chrono::milliseconds(17));
+        --HW.soundTimer;
     }
 }
 
@@ -85,7 +100,6 @@ void Core::fetchOpcode(void)
 
     HW.opcode = HW.memory[HW.programCounter] << 8 | HW.memory[HW.programCounter + 1];
     HW.programCounter += 2;
-    //it is likely that all this business about pc+=4 (e.g 4xKK) is unnecessary, since pc+=2 on fetch
 }
 
 uint16_t Core::decodeOpcode(void)
@@ -154,8 +168,10 @@ void Core::interpretOpcode(void)
 {
     static int iterations = 0;
 
-    uint16_t rawOpcode = decodeOpcode(); // rawOpcode - opcode stripped of x, y, k values etc.
+    // rawOpcode - opcode stripped of x, y, k values etc.
     // simplified for the purpose of accessing function from table
+    uint16_t rawOpcode = decodeOpcode();
+
 
     auto iter = interpreterFunctions.find(rawOpcode);
 
@@ -167,7 +183,8 @@ void Core::interpretOpcode(void)
         auto pc = HW.programCounter;
 
         snprintf(debugBuffer, 100, "iter: %i, opcode: %x, rawopcode: %x, pc: %i, NNN: %x\n", iterations, HW.opcode, rawOpcode, pc, n);
-        logger.logCurrentOpcode(debugBuffer);
+        //logger.logCurrentOpcode(debugBuffer);
+        printf(debugBuffer);
     }
 
     if (iter == interpreterFunctions.end())

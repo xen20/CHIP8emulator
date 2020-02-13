@@ -119,11 +119,6 @@ void Keyboard::Keypressed(const char key)
     case HEX_F:
         keystates[0xF] = 1;
         break;
-
-    case DEBUG:
-        specialKeys[0] = !specialKeys[0];
-        _debug = !_debug;
-        break;
     }
 }
 
