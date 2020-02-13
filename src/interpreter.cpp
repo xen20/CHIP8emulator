@@ -22,7 +22,7 @@ Interpreter::~Interpreter()
 void Interpreter::_00E0(void)
 {
     memset(HW->screen, 0, sizeof(HW->screen)); //clear the screen of pixels
-    HW->drawFlag = true;
+    HW->drawFlag = 1;
 }
 
 // Return from subroutine
@@ -109,11 +109,7 @@ void Interpreter::_8XY4(void)
 
     temp = HW->V[X] + HW->V[Y];
 
-    if (temp > 0xFF)
-        HW->V[0xF] = 1;
-    else
-        HW->V[0xF] = 0;
-
+    HW->V[0xF] = temp > 0xFF ? 1 : 0;
     HW->V[X] = temp;
 }
 
@@ -122,47 +118,27 @@ void Interpreter::_8XY4(void)
 void Interpreter::_8XY5(void)
 {
     HW->V[0xF] = HW->V[X] > HW->V[Y] ? 1 : 0;
-
-//    if (HW->V[X] > HW->V[Y])
-//        HW->V[0xF] = 1;
-//    else
-//        HW->V[0xF] = 0;
-
     HW->V[X] -= HW->V[Y];
 }
 
 // If LSB of V[X] is 1, V[F] = 1, then divide V[X] by 2
 void Interpreter::_8XY6(void)
 {
-    if ((HW->V[X] & 0x1) == 1)
-        HW->V[0xF] = 1;
-    else
-        HW->V[0xF] = 0;
-
+    HW->V[0xF] = (HW->V[X] & 0x1) == 1 ? 1 : 0;
     HW->V[X] >>= 1; // Neat bitwise way of dividing by two
 }
 
 // V[X] = V[Y] - V[X], V[F] = NOT Borrow
 void Interpreter::_8XY7(void)
 {
-    if (HW->V[Y] > HW->V[X])
-        HW->V[0xF] = 1;
-    else
-        HW->V[0xF] = 0;
-
+    HW->V[0xF] = HW->V[Y] > HW->V[X] ? 1 : 0;
     HW->V[X] = HW->V[Y] - HW->V[X];
 }
 
 // If MSB of V[X} = 1, V[F] = 1, then multiply V[X] by 2
 void Interpreter::_8XYE(void)
 {
-    //maybe take a look at this again and see if desired value is acquired!
-
-    if ((HW->V[X] >> 7) == 1)
-        HW->V[0xF] = 1;
-    else
-        HW->V[0xF] = 0;
-
+    HW->V[0xF] = (HW->V[X] >> 7) ? 1 : 0;
     HW->V[X] <<= 1;  // Bitwise *2
 }
 
@@ -253,10 +229,6 @@ void Interpreter::_FX07(void)
 //Wait for a key press, store the value of the key in V[X]
 void Interpreter::_FX0A(void)
 {
-    //if buggy, take a look at this again and see if a delay/exec stop can
-    //be written using some SDL function instead of rolling PC back while
-    //no key has been pressed
-
     int temp = -1;
 
     for (int idx = 0; idx < 16; ++idx)
@@ -301,7 +273,7 @@ void Interpreter::_FX29(void)
 void Interpreter::_FX33(void)
 {
     //Refer wikipedia/BCD 8421
-    HW->memory[HW->indexRegister]     =  HW->V[X] / 100;
+    HW->memory[HW->indexRegister] =  HW->V[X] / 100;
     HW->memory[HW->indexRegister + 1] = (HW->V[X] / 10) % 10;
     HW->memory[HW->indexRegister + 2] = (HW->V[X] % 100) % 10;
 }
