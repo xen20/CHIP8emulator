@@ -4,17 +4,17 @@
 
 #include "debugutils.h"
 
-DebugUtils::DebugUtils()
+Logger::Logger()
 {
     getCurrentTime();
 }
 
-DebugUtils::~DebugUtils()
+Logger::~Logger()
 {
 
 }
 
-void DebugUtils::logCurrentOpcode(char *data)
+void Logger::logCurrentOpcode(char *data)
 {
     char buffer[20] = "opcode_log";
     strcat(buffer, currentTime);
@@ -29,7 +29,7 @@ void DebugUtils::logCurrentOpcode(char *data)
     fclose(fp);
 }
 
-void DebugUtils::getCurrentTime(void)
+void Logger::getCurrentTime(void)
 {
     time_t timer;
     struct tm *timeInfo;

@@ -15,6 +15,7 @@ class Draw
     public:
 
         Draw();
+        virtual ~Draw();
         void initSDL(SDL_Window **_win, SDL_Renderer **_ren);
         void drawSDL(Hardware *HW);
         void closeSDL(void);

@@ -1,29 +1,19 @@
-﻿#include <cstdlib>        //exit()
-#include <cstring>
-#include <unordered_map>
-#include <thread>
-#include <chrono>
+﻿#include <cstdlib>
+#include <map>
 
 #include "core.h"
 #include "interpreter.h"
 
-uint8_t      specialKeys[2];
-bool         _debug;
-
-typedef void (Interpreter::*interpreterFptr)(void);
-typedef std::unordered_map<uint16_t, interpreterFptr> FunctionMap;
-
-FunctionMap interpreterFunctions;
-
-Core::Core() : Interpret(&this->HW),  KBD(&this->event)
+Core::Core() : interpret(&this->hardware), keyboard(&this->event)
 {
     indexOpcodes();
 
     win = NULL;
     ren = NULL;
 
-    memset(debugBuffer, 0, sizeof(debugBuffer));
     isRunning = true;
+
+    sound.initSoundGenerator();
 }
 
 Core::~Core()
@@ -47,48 +37,85 @@ void Core::loadROM(char *ROM)
         while (ROMChunk != EOF)
         {
             ROMChunk = fgetc(ROMStream);
-            HW.memory[idx] = ROMChunk;
+            hardware.memory[idx] = ROMChunk;
             ++idx;
         }
 
         fclose(ROMStream);
-        printf("ROM Loaded\n");
+        printf("ROM: \"%s\" Loaded\n", ROM);
+        printf("Press p to pause, n for next opcode while paused, l for current opcode & program counter, and h for register data.\n");
+        printf("Press button again to cancel selected operation.\n");
     }
 }
 
 void Core::initSDL(void)
 {
-    DR.initSDL(&win, &ren);
+    draw.initSDL(&win, &ren);
 }
 
 void Core::closeSDL(void)
 {
-    DR.closeSDL();
+    draw.closeSDL();
+}
+
+void Core::handleTimers(void)
+{
+    if (hardware.delayTimer > 0)
+    {
+        --hardware.delayTimer;
+    }
+
+    if (hardware.soundTimer > 0)
+    {
+        if (hardware.soundTimer == 1)
+        {
+            printf("BEEP\n");
+        }
+
+        --hardware.soundTimer;
+    }
+}
+
+void Core::emulateSingleCycle(void)
+{
+    fetchOpcode();
+    interpretOpcode();
+
+    if (hardware.drawFlag == 1)
+        draw.drawSDL(&hardware);
+
+    handleTimers();
 }
 
 void Core::emulateSystem(void)
 {
-    KBD.pollKeyboard(&isRunning);
-    fetchOpcode();
-    interpretOpcode();
+    keyboard.pollKeyboard(&isRunning);
 
-    if (HW.drawFlag == 1)
-        DR.drawSDL(&HW);
-
-    if(HW.delayTimer > 0)
+    if (!keyboard.debugKeys.at("Pause"))
     {
-        //std::this_thread::sleep_for(std::chrono::milliseconds(17));
-        --HW.delayTimer;
+        emulateSingleCycle();
+
+        if (keyboard.debugKeys.at("Log"))
+            getDebugInfo();
+
+        if (keyboard.debugKeys.at("Hardware"))
+            getRegisterInfo();
+
+        return;
     }
 
-
-    if(HW.soundTimer > 0)
+    if (keyboard.debugKeys.at("Pause") && keyboard.debugKeys.at("Next"))
     {
-        if(HW.soundTimer == 1)
-            printf("BEEP!\n");
+        emulateSingleCycle();
 
-        //std::this_thread::sleep_for(std::chrono::milliseconds(17));
-        --HW.soundTimer;
+        if (keyboard.debugKeys.at("Log"))
+            getDebugInfo();
+
+        if (keyboard.debugKeys.at("Hardware"))
+            getRegisterInfo();
+
+        keyboard.debugKeys.at("Next") = false;
+        return;
     }
 }
 
@@ -98,8 +125,8 @@ void Core::fetchOpcode(void)
       each opcode consists of two concequent values in memory
       which need to be added together via bitwise OR op.*/
 
-    HW.opcode = HW.memory[HW.programCounter] << 8 | HW.memory[HW.programCounter + 1];
-    HW.programCounter += 2;
+    hardware.opcode = hardware.memory[hardware.programCounter] << 8 | hardware.memory[hardware.programCounter + 1];
+    hardware.programCounter += 2;
 }
 
 uint16_t Core::decodeOpcode(void)
@@ -112,7 +139,7 @@ uint16_t Core::decodeOpcode(void)
     uint16_t decodedOpcode = 0;
     uint16_t temp = 0;
 
-    decodedOpcode = HW.opcode & 0xF0FF;
+    decodedOpcode = hardware.opcode & 0xF0FF;
 
     if (decodedOpcode == 0xF055 || decodedOpcode == 0xF065 || decodedOpcode == 0x00E0 || decodedOpcode == 0x00EE)
     {
@@ -159,44 +186,35 @@ void Core::indexOpcodes(void)
     size_t        functionAmount = sizeof(opcodeFuncIdx) / sizeof(opcodeFuncIdx[0]);
 
     for (uint8_t idx = 0; idx < functionAmount; ++idx)
-    {
         interpreterFunctions.emplace(opcodeFuncIdx[idx], opcodeFuncPtr[idx]);
-    }
 }
 
 void Core::interpretOpcode(void)
 {
-    static int iterations = 0;
-
-    // rawOpcode - opcode stripped of x, y, k values etc.
-    // simplified for the purpose of accessing function from table
     uint16_t rawOpcode = decodeOpcode();
-
 
     auto iter = interpreterFunctions.find(rawOpcode);
 
-    _debug = true;
-
-    if (_debug)
+    if (iter != interpreterFunctions.end())
     {
-        auto n = HW.opcode & 0x0FFF;
-        auto pc = HW.programCounter;
-
-        snprintf(debugBuffer, 100, "iter: %i, opcode: %x, rawopcode: %x, pc: %i, NNN: %x\n", iterations, HW.opcode, rawOpcode, pc, n);
-        //logger.logCurrentOpcode(debugBuffer);
-        printf(debugBuffer);
+        ++iterations;
+        (interpret.*(iter->second))();
+        return;
     }
 
-    if (iter == interpreterFunctions.end())
-    {
-        fprintf(stderr, "Invalid opcode detected\n");
-        fprintf(stderr, "%i\n", iterations);
-        _debug = false;
-        exit(-2);
-    }
-    else
-    {
-        ++iterations; // Used in debug
-        (Interpret.*(iter->second))(); // Execute instruction
-    }
+    fprintf(stderr, "Invalid opcode detected\n");
+    fprintf(stderr, "%i\n", iterations);
+    exit(-2);
+}
+
+void Core::getDebugInfo(void)
+{
+    printf("iter: %i, opcode: %x, pc: %i\n", iterations, hardware.opcode, hardware.programCounter);
+
+}
+
+void Core::getRegisterInfo(void)
+{
+    printf("Vx: %x, Vy: %x, Vf: %x, delay timer: %i, sound timer: %i, stack pointer: %i\n", hardware.V[(hardware.opcode &  0x0F00) >> 8],
+           hardware.V[(hardware.opcode &  0x00F0) >> 4], hardware.V[0xF], hardware.delayTimer, hardware.soundTimer, hardware.stackPtr);
 }

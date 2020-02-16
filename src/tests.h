@@ -25,8 +25,6 @@ namespace emutest
         public:
             HardwareTests();
             virtual ~HardwareTests();
-        private:
-
     };
 }
 

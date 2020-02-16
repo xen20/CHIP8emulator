@@ -7,6 +7,11 @@ Draw::Draw()
 
 }
 
+Draw::~Draw()
+{
+
+}
+
 void Draw::initSDL(SDL_Window **_win, SDL_Renderer **_ren)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)

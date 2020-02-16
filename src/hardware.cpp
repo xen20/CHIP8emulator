@@ -1,4 +1,4 @@
-#include <cstring> // Memset
+#include <cstring>
 
 #include "hardware.h"
 #include "fontset.h"

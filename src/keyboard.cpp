@@ -1,6 +1,4 @@
 #include <cstring>
-#include <cstdio>
-#include <cctype>
 
 #include "keyboard.h"
 
@@ -10,9 +8,7 @@ Keyboard::Keyboard(SDL_Event *_event)
 
     memset(keystates, 0, keystate_amount);
 
-    for (int idx = 0; idx < sizeof(specialKeys) / sizeof(specialKeys[0]); ++idx)
-        specialKeys[idx] = false;
-
+    debugKeys = {{"Pause", false}, {"Log", false}, {"Hardware", false}, {"Next", false}};
     event = _event;
 }
 
@@ -118,6 +114,22 @@ void Keyboard::Keypressed(const char key)
 
     case HEX_F:
         keystates[0xF] = 1;
+        break;
+
+    case PAUSE:
+        debugKeys.at("Pause") = !debugKeys.at("Pause");
+        break;
+
+    case LOG:
+        debugKeys.at("Log") = !debugKeys.at("Log");
+        break;
+
+    case HARDWARE:
+        debugKeys.at("Hardware") = !debugKeys.at("Hardware");
+        break;
+
+    case NEXT:
+        debugKeys.at("Next") = true;
         break;
     }
 }

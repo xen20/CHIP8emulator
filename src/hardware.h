@@ -14,7 +14,7 @@ class Hardware
     public:
 
         Hardware();
-        ~Hardware();
+        virtual ~Hardware();
 
         uint16_t programCounter;
         uint16_t opcode;

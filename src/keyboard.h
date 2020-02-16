@@ -2,6 +2,7 @@
 #define KEYBOARD_H
 
 #include <cstdint>
+#include <map>
 #include <SDL.h>
 
 #define HEX_1 '1'
@@ -24,18 +25,21 @@
 #define HEX_B 'c'
 #define HEX_F 'v'
 
-#define DEBUG 'p'
+#define PAUSE 'p'
+#define LOG   'l'
+#define HARDWARE 'h'
+#define NEXT 'n'
 
 extern uint8_t keystates[16];
-extern uint8_t specialKeys[2];
 
 class Keyboard
 {
     public:
 
         Keyboard(SDL_Event *_event);
-        ~Keyboard();
+        virtual ~Keyboard();
         void pollKeyboard(bool *isRunning);
+        std::map<std::string, bool> debugKeys;
 
     private:
 
