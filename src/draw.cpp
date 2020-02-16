@@ -22,7 +22,7 @@ void Draw::initSDL(SDL_Window **_win, SDL_Renderer **_ren)
     else
     {
         *_win = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                 SCREEN_HEIGHT, SCREEN_WIDTH, SDL_WINDOW_RESIZABLE);
+                                 SCREEN_HEIGHT, SCREEN_WIDTH, SDL_WINDOW_SHOWN);
         *_ren = SDL_CreateRenderer(*_win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
         win = *_win;
